@@ -62,12 +62,12 @@
 #define DIR0 10
 #define STP1 11
 #define DIR1 12
-#define STP2 24
-#define DIR2 25
-#define STP3 26
-#define DIR3 27
-#define STP4 28
-#define DIR4 29
+#define DIR2 24
+#define STP2 25
+#define DIR3 26
+#define STP3 27
+#define DIR4 28
+#define STP4 29
 #define ALRM 30
 #define PEND 31
 

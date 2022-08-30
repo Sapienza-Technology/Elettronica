@@ -9,7 +9,7 @@
 #include <std_msgs/UInt16.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
-
+#include <iostream>
 #include <Servo.h>
 #include <AccelStepper.h>
 #include <elapsedMillis.h>
