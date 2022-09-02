@@ -4,7 +4,7 @@
 ros::NodeHandle nh;
 //number of joints and which joint is a servo motor
 #define N_JOINT 6
-#define SERVO_IDX 5
+#define SERVO_IDX 4
 
 //arm servo motor parameters
 //TODO: find correct number
@@ -40,11 +40,13 @@ int angleToStep(float angle){
 //define stepper motors
 // Motor Connections (constant current, step/direction bipolar motor driver)
 //AccelStepper::DRIVER works for a4988 (Bipolar, constant current, step/direction driver)
+
 AccelStepper stepper1(AccelStepper::DRIVER, STP0, DIR0);           
 AccelStepper stepper2(AccelStepper::DRIVER, STP1, DIR1); 
 AccelStepper stepper3(AccelStepper::DRIVER, STP2, DIR2); 
 AccelStepper stepper4(AccelStepper::DRIVER, STP3, DIR3); 
-AccelStepper stepper5(AccelStepper::DRIVER, STP4, DIR4); 
+AccelStepper stepper5(AccelStepper::DRIVER, STP4, DIR4);
+
 
 //define servo motor
 Servo S;
@@ -61,17 +63,20 @@ ros::Subscriber<std_msgs::Float32MultiArray> armVelSub("firmware_arm_vel", setTa
 ros::Subscriber<std_msgs::Float32> EEPSub("firmware_EEP_pos", pirulatore_cb);
 ros::Subscriber<std_msgs::Float32> EEMSub("firmware_EEM_pos", pinza_cb);
 
-//received a desired position for the arm
+//received a desired position for the armstepper5
 void setTargetPos_cb(const std_msgs::Float32MultiArray& cmd) {
     //digitalWrite(LED_BUILTIN, HIGH);
     //sleep
     //delay(100);
-    printf("received data:");
+    //printf("received data:");
+
     //extract data from message
     for (int i=0; i<N_JOINT; i++){
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(100);
         //std::cout << cmd << std::endl;
         //Serial.println(cmd.data[i]);
-        printf("%f ", cmd.data[i]);
+        //printf("%f ", cmd.data[i]);
         if(i==SERVO_IDX){
             targetPositions[i]=cmd.data[i];
         }
@@ -79,22 +84,36 @@ void setTargetPos_cb(const std_msgs::Float32MultiArray& cmd) {
             //targetPositions[i]=angleToStep(cmd.data[i]);
             targetPositions[i]=cmd.data[i];
         }
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(100);
     }
-        digitalWrite(LED_BUILTIN, HIGH);
-    
+    delay(500);
     //set desired position
-    for(int i=0; i<5; i++){
-        //set desired position for stepper
+    for(int i=0; i<N_JOINT; i++){
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(100);
+        //set desired position for stepper ignoring servo
+        /*if (i != 4) {
+            stepper_motors[i].moveTo(targetPositions[i]);
+            stepper_motors[i].setMaxSpeed(500.0);
+            stepper_motors[i].setSpeed(400.0);
+        }
+        */
+        stepper1.moveTo(targetPositions[0]);
+        stepper2.moveTo(targetPositions[1]);
+        stepper3.moveTo(targetPositions[2]);
+        stepper4.moveTo(targetPositions[3]);
+        stepper5.moveTo(targetPositions[5]);
 
-        stepper_motors[i].moveTo(targetPositions[i]);
-        stepper_motors[i].setSpeed(400.0);
-        stepper_motors[i].setMaxSpeed(500.0);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(100);
 
         //float vel= (float)targetVelocities[i];
         //if (vel) stepper_motors[i].setSpeed(vel);
     }
-    S.write(targetPositions[SERVO_IDX]);
+    //S.write(targetPositions[SERVO_IDX]);
     
+
 }
 
 //received a desired velocity for the arm
@@ -105,12 +124,14 @@ void setTargetVel_cb(const std_msgs::Float32MultiArray& cmd) {
     }
 
     //set desired position
-    for(int i=0; i<5; i++){
-        if (targetVelocities[i]) {
-            float vel= (float)targetVelocities[i];
-            if (vel>0){
-                //set desired velcoity for stepper
-                stepper_motors[i].setSpeed(vel);
+    for(int i=0; i<N_JOINT; i++){
+        if (i != 4) {
+            if (targetVelocities[i]) {
+                float vel= (float)targetVelocities[i];
+                if (vel>0){
+                    //set desired velcoity for stepper
+                    stepper_motors[i].setSpeed(vel);
+                }
             }
         }
     }
@@ -139,8 +160,29 @@ void pinza_cb(const std_msgs::Float32& cmd) {
 void setup() {
     ////Serial.println("pierino");
     // ROS
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, LOW);
+    stepper1.setMinPulseWidth(10);
+    stepper1.setMaxSpeed(800);
+    stepper1.setAcceleration(400.0);
+
+    stepper2.setMinPulseWidth(10);
+    stepper2.setMaxSpeed(800);
+    stepper2.setAcceleration(400.0);
+
+    stepper3.setMinPulseWidth(10);
+    stepper3.setMaxSpeed(800);
+    stepper3.setAcceleration(400.0);
+
+    stepper4.setMinPulseWidth(10);
+    stepper4.setMaxSpeed(200);
+    stepper4.setAcceleration(100.0);
+
+    stepper5.setMinPulseWidth(10);
+    stepper5.setMaxSpeed(800);
+    stepper5.setAcceleration(400.0);
+    
+    //stepper5.setSpeed(400);
+    //pinMode(LED_BUILTIN, OUTPUT);
+    //digitalWrite(LED_BUILTIN, LOW);
     //debug print teensy
 
     
@@ -150,13 +192,16 @@ void setup() {
     nh.subscribe(armVelSub);
     nh.subscribe(EEPSub);
     nh.subscribe(EEMSub);
+
+    /*
     stepper_motors[0]=stepper1;
     stepper_motors[1]=stepper2;
     stepper_motors[2]=stepper3;
     stepper_motors[3]=stepper4;
     stepper_motors[4]=stepper5;
+    */
 
-
+   /*
     //set max speed for stepper motors
     for(int i=0; i<5; i++){
         stepper_motors[i].setMaxSpeed(2000.0);
@@ -166,6 +211,7 @@ void setup() {
         //stepper_motors[i].moveTo(0);
         //stepper_motors[i].setAcceleration(50.0);
     }
+    */
     /*
     //init servo
     //TODO: check if this is the correct pin
@@ -200,14 +246,20 @@ void loop() {
     //for each stepper verify if position is reached
     //if not, run stepper
 
-    
+    /*
     for (int i = 0; i < 5; i++) {
-        if(stepper_motors[i].run())  {
+        //if(stepper_motors[i].run())  {
             //Serial.println("stepper running");
-        }
+        //}
+        stepper_motors[i].runSpeed();
     }
-    
-    
+    */
+    stepper1.run();
+    stepper2.run();
+    stepper3.run();
+    stepper4.run();
+    stepper5.run();
+
     /*
     if (!stepper1.run()){
         stepper1.moveTo(-stepper1.currentPosition());
@@ -216,5 +268,5 @@ void loop() {
     */
     //ros node stuff
     nh.spinOnce();
-    //delay(1);
+    delay(1);
 }

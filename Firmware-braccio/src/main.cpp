@@ -1,6 +1,22 @@
 #include "main.h"
 //https://hackaday.io/project/183279-accelstepper-the-missing-manual/details
 
+/*
+rostopic pub /firmware_arm_pos std_msgs/Float32MultiArray "layout: 
+dim:
+  - label: ''
+    size: 0
+    stride: 0
+  data_offset: 0
+data: 
+- 400.0
+- 0.0
+- 0.0
+- 0.0
+- 0.0
+- 0.0"
+
+*/
 ros::NodeHandle nh;
 //number of joints and which joint is a servo motor
 #define N_JOINT 6
@@ -19,6 +35,7 @@ ros::NodeHandle nh;
 
 //res= step/n_revolution
 float stepper_resolution=1.8;
+float microstep=8.0;
 //check if resolution is different for each stepper
 
 //TODO: check sintax
@@ -31,10 +48,11 @@ float targetPositions[6];
 float EEPos=0;
 
 
-int angleToStep(float angle){
+int angleToStep(float rad){
   //convert the desired angle for the stepper motor into
   // the number of steps to reach the desired position
-  return (int)(angle/stepper_resolution);
+  float angle= rad*180.0/PI;
+  return (int)(angle/(stepper_resolution/microstep));
 }
 
 //define stepper motors
@@ -135,10 +153,10 @@ void pinza_cb(const std_msgs::Float32& cmd) {
 }
 
 void setup() {
-    //Serial.println("pierino");
+    ////Serial.println("pierino");
     // ROS
-    //pinMode(LED_BUILTIN, OUTPUT);
-    //digitalWrite(LED_BUILTIN, LOW);
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
     //debug print teensy
 
     
@@ -164,10 +182,10 @@ void setup() {
         stepper_motors[i].moveTo(0);
         stepper_motors[i].setAcceleration(50.0);
     }
+    S.attach(SERVO0, ENDSTOP_M_A, ENDSTOP_M_B);
     /*
     //init servo
     //TODO: check if this is the correct pin
-    S.attach(MSERVO0, ENDSTOP_M_A, ENDSTOP_M_B);
     //S.write(start_pos)
     s1.attach(SERVO0, ENDSTOP_A, ENDSTOP_B);
     int pos=0;
@@ -176,10 +194,10 @@ void setup() {
     s2.write(180 - pos);
     
     //debug stuff
-    Serial.begin(9600); //what is this?
-    Serial.print("setup");
+    
+    //Serial.print("setup");
     //std::cout << "setup" << std::endl;
-    //Serial.println(pos);
+    ////Serial.println(pos);
     */
     /*
     stepper1.setMaxSpeed(2000.0);
@@ -192,18 +210,24 @@ void setup() {
     stepper1.moveTo(1000);
     //stepper1.setSpeed(2000);
     */
+    Serial.begin(9600); //what is this?
+    S.write(37);
     }
 
 void loop() {
     //for each stepper verify if position is reached
     //if not, run stepper
 
-    
+    /*
     for (int i = 0; i < 5; i++) {
         if(stepper_motors[i].run())  {
-            Serial.println("stepper running");
+            //Serial.println("stepper running");
         }
     }
+    */
+   S.write(90);
+    
+    
     
     
     /*
