@@ -50,7 +50,7 @@
 /*
  * Pinmap for the robot arm Teensy
  */
-#define SERVO0 2
+#define SERVO0 12
 #define SERVO1 3
 
 #define MSERVO0 4
