@@ -1,4 +1,4 @@
-#include "main.h"
+#include "main-single.h"
 //https://hackaday.io/project/183279-accelstepper-the-missing-manual/details
 
 ros::NodeHandle nh;
@@ -19,7 +19,7 @@ ros::NodeHandle nh;
 
 //res= step/n_revolution
 float stepper_resolution=1.8;
-float microstep=8;
+float microstep=1;
 
 
 int step_per_rev=1600;
@@ -37,6 +37,9 @@ float targetVelocities[6];
 float targetPositions[6];
 long currentPositions[6];
 float EEPos=0;
+
+// Determine which joints to move
+int joint_flags[] = {1, 1, 1, 1, 1, 1};
 
 int servo_delay=100;
 int servo_target_pos=0;
@@ -115,9 +118,11 @@ void setTargetPos_cb(const std_msgs::Float32MultiArray& cmd) {
     //printf("received data:");
 
     //extract data from message
-    for (int i=0; i<N_JOINT; i++){
-        digitalWrite(LED_BUILTIN, HIGH);
-        //delay(100);
+    int i = 0;
+
+    for (i=0; i<N_JOINT; i++){
+        //digitalWrite(LED_BUILTIN, HIGH);
+        //delay(500);
         //std::cout << cmd << std::endl;
         //Serial.println(cmd.data[i]);
         //printf("%f ", cmd.data[i]);
@@ -130,34 +135,69 @@ void setTargetPos_cb(const std_msgs::Float32MultiArray& cmd) {
             //targetPositions[i]=angleToStep(cmd.data[i]);
             targetPositions[i]=angleToStep(cmd.data[i]);
         }
-        digitalWrite(LED_BUILTIN, LOW);
-        //delay(100);
+        //digitalWrite(LED_BUILTIN, LOW);
+        //delay(500);
     }
+    
+    /*
+    for (i=N_JOINT; i<N_JOINT*2; i++) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(1000);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(1000);
+        joint_flags[i-N_JOINT] = (int) cmd.data[i];
+    }
+    
     //delay(500);
     //set desired position
 
-    digitalWrite(LED_BUILTIN, HIGH);
+    //digitalWrite(LED_BUILTIN, HIGH);
     //delay(100);
 
-    stepper1.moveTo(targetPositions[0]*motor_reduction[0]);
-    stepper2.moveTo(targetPositions[1]*motor_reduction[1]);
-    stepper3.moveTo(targetPositions[2]*motor_reduction[2]);
-    stepper4.moveTo(targetPositions[3]*motor_reduction[3] );
-    stepper5.moveTo(targetPositions[5]*motor_reduction[5] );
+    for (int j = 0; j < N_JOINT; j++) {
+        if (joint_flags[j] == 0) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(1000);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(1000);
+        }
+        if (joint_flags[j] == 1) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(250);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(250);
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(250);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(250);
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(250);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(1000);
+        }
+    }
+    */
+
+    if (joint_flags[0]) stepper1.moveTo(targetPositions[0]*motor_reduction[0]);
+    if (joint_flags[1]) stepper2.moveTo(targetPositions[1]*motor_reduction[1]);
+    if (joint_flags[2]) stepper3.moveTo(targetPositions[2]*motor_reduction[2]);
+    if (joint_flags[3]) stepper4.moveTo(targetPositions[3]*motor_reduction[3]);
+    if (joint_flags[5]) stepper5.moveTo(targetPositions[5]*motor_reduction[5]);
     //stepper1.moveTo(200);
     //stepper2.moveTo(200);
     //stepper3.moveTo(200);
     //stepper4.moveTo(200);
     //stepper5.moveTo(200);
 
-    digitalWrite(LED_BUILTIN, LOW);
+    //digitalWrite(LED_BUILTIN, LOW);
     //delay(100);
 
     //float vel= (float)targetVelocities[i];
     //if (vel) stepper_motors[i].setSpeed(vel);
 
     //S.write(targetPositions[SERVO_IDX]);
-    servo_target_pos=targetPositions[SERVO_IDX];
+    if (joint_flags[4]) servo_target_pos=targetPositions[SERVO_IDX];
+
 
 }
 
@@ -212,16 +252,16 @@ void setup() {
 
 
     stepper1.setMinPulseWidth(10);
-    stepper1.setMaxSpeed(7200);
-    stepper1.setAcceleration(4800.0);
+    stepper1.setMaxSpeed(200);
+    stepper1.setAcceleration(200.0);
 
     stepper2.setMinPulseWidth(10);
-    stepper2.setMaxSpeed(3200);
-    stepper2.setAcceleration(1600.0);
+    stepper2.setMaxSpeed(400);
+    stepper2.setAcceleration(400.0);
 
     stepper3.setMinPulseWidth(10);
-    stepper3.setMaxSpeed(14400);
-    stepper3.setAcceleration(14400.0);
+    stepper3.setMaxSpeed(3200);
+    stepper3.setAcceleration(3200.0);
 
     stepper4.setMinPulseWidth(10);
     stepper4.setMaxSpeed(100);
@@ -232,7 +272,9 @@ void setup() {
     stepper5.setAcceleration(10.0);
     S.attach(12,ENDSTOP_A,ENDSTOP_B);
     servo_pos=S.read();
-    s1.attach(13, ENDSTOP_M_A, ENDSTOP_M_B); //destra guardando i motori
+    // HO CAMBIATO IL PIN DEL SERVINO DA 13 A 14 PERCHÉ 13 È QUELLO DEL BUILTIN LED CHE USO PER DEBUG
+    // SE NON FUNZIONA RICAMBIARE
+    s1.attach(14, ENDSTOP_M_A, ENDSTOP_M_B); //destra guardando i motori
     s2.attach(30, ENDSTOP_M_A, ENDSTOP_M_B); //sinistra guardando i motori
     //s1.write(180);
     //S.write(servo_target_pos);
@@ -240,8 +282,9 @@ void setup() {
     //s2.write(180 - pinza_target_pos);
     
     //stepper5.setSpeed(400);
-    //pinMode(LED_BUILTIN, OUTPUT);
-    //digitalWrite(LED_BUILTIN, LOW);
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
+
     //debug print teensy
     //posMultiArray.data=array_setup;
     //std::cout << "Hello world!" << std::endl;
@@ -421,11 +464,12 @@ void loop() {
     //move motors
     //move servo to 200
     
-    stepper3.run();
-    stepper1.run();
-    stepper2.run();
-    stepper4.run();
-    stepper5.run();
+    
+    if (joint_flags[0]) stepper1.run();
+    if (joint_flags[1]) stepper2.run();
+    if (joint_flags[2]) stepper3.run();
+    if (joint_flags[3]) stepper4.run();
+    if (joint_flags[5]) stepper5.run();
     
 
     //stepper4.setSpeed(-800);
@@ -440,6 +484,7 @@ void loop() {
 
     //move servo
     //move pirulatore with delay
+    // DECOMMENTA PER FAR FUNZIONARE I SERVIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
     
     if(mini_servo_mov%mini_servo_delay==0){
         if(mini_servo_current_pos>mini_servo_target_pos){
@@ -455,6 +500,7 @@ void loop() {
     if (mini_servo_current_pos!=mini_servo_target_pos){
         mini_servo_mov++;
     }
+
 
 
     /*
