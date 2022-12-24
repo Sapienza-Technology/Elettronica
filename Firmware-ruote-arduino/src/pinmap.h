@@ -2,24 +2,41 @@
 #ifndef PINMAP_H
 #define PINMAP_H
 #if PINMAP == 0
+
+#define DRV1_B1 5
+#define DRV1_B2 7
+#define DRV1_A1 4 
+#define DRV1_A2 6
+
+//pin for encoders of six wheels
+//L=left R=right F=front B=back M=middle
+//interrupt 2, 3, 18, 19, 20, 21
+//a in interrupt
+
+//in encoder: 
+//fila destra BLU: CH.B              VERDE: CH.A        ARANCIO: VCC        GIALLO: GND
+//fila sinistra VIOLA: CH.B          GRIGIO: CH.A        NERO: VCC:          BIANCO GND
+
+#define ENC_LF_A 19
+#define ENC_LF_B 10
+#define ENC_LB_A 20
+#define ENC_LB_B 24
+#define ENC_LM_A 18
+#define ENC_LM_B 26
+
+#define ENC_RF_A 3
+#define ENC_RF_B 28
+#define ENC_RB_A 21
+#define ENC_RB_B 30
+#define ENC_RM_A 2
+#define ENC_RM_B 32
+
+
+#define LIGHT_DNG 26
+#define LIGHT_WRN 27
+#define LIGHT_OK 28
+
 /*
- * Pinmap for the main Teensy
- */
-/* #define DRV1_A1 3 // arancione
-#define DRV1_A2 2 //giallo
-#define DRV1_B1 5 //grigio 
-#define DRV1_B2 4 //viola */
-//A destra
-#define DRV1_A1 3 // arancione
-#define DRV1_A2 4 //giallo
-#define DRV1_B1 10 //grigio 
-#define DRV1_B2 11 //viola 
-//#define DRV1_E 6
-/* #define DRV2_A1 8 //arancio
-#define DRV2_A2 9 //giallo
-#define DRV2_B1 6 //gri\gio
-#define DRV2_B2 7 //viola */
-//#define DRV2_E 11
 
 #define DRV1_AC 23
 #define DRV1_BC 22
@@ -29,9 +46,6 @@
 #define PWM0 24
 #define PWM1 25
 
-#define LIGHT_DNG 26
-#define LIGHT_WRN 27
-#define LIGHT_OK 28
 
 #define SCALE0_D 17
 #define SCALE0_C 16
@@ -50,6 +64,7 @@
 #define AUX1 31
 #define AUX2 30
 #define AUX3 29
+*/
 
 #else
 /*
