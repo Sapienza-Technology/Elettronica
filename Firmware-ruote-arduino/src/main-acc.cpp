@@ -4,13 +4,8 @@
 ros::NodeHandle nh;
 
 #define MAX_V 10.0
-#define WHEEL_TURNS 5
-
-/*
-MAX_V va settato rispetto alla velocità massima.
-MAX_V è la velocità massima del motore, quindi per trovarlo usando la velocità massima faccio:
-//trovare formula
-*/
+#define WHEEL_TURNS 1
+//deve fare x giri quindi in metri 2*pi*0.08*x
 
 
 void cb2(const std_msgs::Float32& cmd) {
@@ -25,10 +20,9 @@ ros::Subscriber<std_msgs::Float32> rightSub("destra", cb1);
 ros::Subscriber<std_msgs::Float32> leftSub("sinistra", cb2);
 
 int turns=0;
+float enc_res=356.3;
 
-int A=18;
-int B=19;
-Encoder ruota(A,B);
+Encoder ruota(ENC_LM_A,ENC_LM_B);
 
 void setup() {
     // Teensy LED
@@ -58,8 +52,10 @@ void loop() {
 
     //delay(1);
     //356.3*4
-    if( ruota.read()==1424*(turns+1)){
-        turns+=1;
+    int r=ruota.read();
+    if( r>=enc_res*2*2*WHEEL_TURNS){
+        setLeftSpeed(0);
+        setRightSpeed(0);
     };
 }
 
@@ -67,11 +63,11 @@ void setLeftSpeed(float x) {
     
     float vel = abs(x);
     if (vel < 0.01) {
-        turns=0;
+        
         analogWrite(DRV1_B2, 0);
         analogWrite(DRV1_B1, 0);
+        return;
     }
-    if (turns==WHEEL_TURNS) return;
 
     boolean dir = sgn(x);
     int pwm = fmap(vel, 0, MAX_V, 0, 255);
@@ -87,12 +83,12 @@ void setLeftSpeed(float x) {
 
 void setRightSpeed(float x) {
     float vel = abs(x);
-    if (vel < 0.01) {
-        turns=0;
+    if ( vel < 0.01) {
+        
         analogWrite(DRV1_A2, 0);
         analogWrite(DRV1_A1, 0);  
+        return;
     }
-    if (turns==WHEEL_TURNS) return;
 
     boolean dir = sgn(x);
     int pwm = (int) fmap(vel, 0.0, MAX_V, 0, 255);

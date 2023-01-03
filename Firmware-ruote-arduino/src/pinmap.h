@@ -11,7 +11,7 @@
 //pin for encoders of six wheels
 //L=left R=right F=front B=back M=middle
 //interrupt 2, 3, 18, 19, 20, 21
-//a in interrupt
+//Canale A in interrupt
 
 //in encoder: 
 //fila destra BLU: CH.B              VERDE: CH.A        ARANCIO: VCC        GIALLO: GND

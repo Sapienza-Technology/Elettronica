@@ -8,7 +8,6 @@ ros::NodeHandle nh;
 
 #define MAX_V 10.0
 
-int move=1;
 //encoders
 //L=left R=right F=front B=back M=middle
 Encoder wheel_LF(ENC_LF_A, ENC_LF_B);
@@ -22,7 +21,10 @@ std_msgs::Float32MultiArray posMultiArray;
 
 //if two interrupt pins=4, else is 2
 //a complete rotation is encoder_resolution*encoder_multiplier
-int encoder_multiplier=2;
+int encoder_std_multiplier=2;
+int encoder_interrupt_multiplier=2;
+int encoder_multiplier=encoder_std_multiplier*encoder_interrupt_multiplier;
+float enc_res=356.3;
 
 void cb2(const std_msgs::Float32& cmd) {
     setLeftSpeed(cmd.data);
@@ -36,11 +38,10 @@ ros::Subscriber<std_msgs::Float32> rightSub("destra", cb1);
 ros::Subscriber<std_msgs::Float32> leftSub("sinistra", cb2);
 ros::Publisher posPub("wheel_encoder_feedback", &posMultiArray);
 
-std_msgs::Int32 single_enc;
-ros::Publisher posPub2("single_wheel_feedback", &single_enc);
 
-
-
+float convert_enc_value(int enc_value){
+    return ((enc_value/encoder_multiplier)/enc_res )*360;
+}
 
 void setup() {
     // Teensy LED
@@ -76,23 +77,18 @@ void setup() {
     nh.subscribe(rightSub);
     nh.subscribe(leftSub);
     nh.advertise(posPub);
-    nh.advertise(posPub2);
 }
 
 void loop() {
     nh.spinOnce();
-    posMultiArray.data[0] = wheel_LF.read();
-    posMultiArray.data[1] = wheel_LM.read();
-    posMultiArray.data[2] = wheel_LB.read();
-    posMultiArray.data[3] = -wheel_RF.read();
-    posMultiArray.data[4] = -wheel_RM.read();
-    posMultiArray.data[5] = -wheel_RB.read();
+    posMultiArray.data[0] = convert_enc_value(wheel_LF.read());
+    posMultiArray.data[1] = convert_enc_value(wheel_LM.read());
+    posMultiArray.data[2] = convert_enc_value(wheel_LB.read());
+    posMultiArray.data[3] = convert_enc_value(-wheel_RF.read());
+    posMultiArray.data[4] = convert_enc_value(-wheel_RM.read());
+    posMultiArray.data[5] = convert_enc_value(-wheel_RB.read());
     posPub.publish(&posMultiArray);
 
-    single_enc.data = (long) wheel_LF.read();
- 
-    posPub2.publish(&single_enc);
-    //delay(1);
 }
 
 void setLeftSpeed(float x) {
