@@ -6,12 +6,11 @@
 #include <ros.h>
 #include "utils.h"
 #include <AccelStepper.h>
-#include <ArduinoSTL.h>
 #include <std_msgs/Float32MultiArray.h>
 
 #define WHEEL_RADIUS 0.08
-#define MAX_V 1
-#define MAX_W MAX_V/WHEEL_RADIUS
+#define MAX_V 1 //max allowed linear velocity in m/s
+#define MAX_W MAX_V/WHEEL_RADIUS //max allowed angular velocity in rad/s
 
 class Wheel {
     public:
@@ -59,25 +58,26 @@ class SteeringWheel{
         int stepper_resolution=STP_RESOLUTION;
         int microstep=MICROSTEP;
         int reduction_ratio=REDUCTION_RATIO;
+        AccelStepper* stepper;
 
         //constructor
-        void SteeringWheel(int pinStep, int pinDir) {
+        SteeringWheel(int pinStep, int pinDir) {
             this->pinStep = pinStep;
             this->pinDir = pinDir;
 
-            AccelStepper stepper(AccelStepper::DRIVER, pinStep, pinDir);
-            stepper.setMinPulseWidth(20);
-            stepper.setMaxSpeed(200);
-            stepper.setAcceleration(200.0);
+            stepper=  new AccelStepper(AccelStepper::DRIVER, pinStep, pinDir);
+            stepper->setMinPulseWidth(20);
+            stepper->setMaxSpeed(200);
+            stepper->setAcceleration(200.0);
         }
 
         void moveToAngle(float angle) {
             int steps = angleToStep(angle);
-            stepper.moveTo(steps);
+            stepper->moveTo(steps);
         }
 
         void run() {
-            stepper.run();
+            stepper->run();
         }
 
         private:
