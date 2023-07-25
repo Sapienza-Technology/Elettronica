@@ -84,7 +84,7 @@ class SteeringWheel{
             int angleToStep(float angle){
                 //convert the desired angle for the stepper motor into
                 // the number of steps to reach the desired position
-                angle=angle/PI *180.0;
+                angle= radToDeg(angle);
                 return (int)(angle/stepper_resolution*microstep)*reduction_ratio;
             }
 
