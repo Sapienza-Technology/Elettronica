@@ -14,36 +14,49 @@
 
 class Wheel {
     public:
-        int pinForward;
-        int pinBackward;
+        int pinCW;
+        int pinCCW;
+        int pinSpeed;
 
         //constructor
-        Wheel(int pinForward, int pinBackward) {
-            this->pinForward = pinForward;
-            this->pinBackward = pinBackward;
+        Wheel(int pinCW, int pinCCW, int pinSpeed) {
+            this->pinCW = pinCW;
+            this->pinCCW = pinCCW;
+            this->pinSpeed =pinSpeed;
 
-            pinMode(pinForward, OUTPUT);
-            digitalWrite(pinForward, LOW);
+            pinMode(pinCW, OUTPUT);
+            digitalWrite(pinCW, HIGH);
 
-            pinMode(pinBackward, OUTPUT);
-            digitalWrite(pinBackward, LOW);
+            pinMode(pinCCW, OUTPUT);
+            digitalWrite(pinCCW, LOW);
+
+            pinMode(pinSpeed, OUTPUT);
+            analogWrite(pinSpeed, 0);
+       }
+
+        void setForward(){
+            digitalWrite(pinCW, HIGH);
+            digitalWrite(pinCCW, LOW);
+        }
+
+        void setBackward(){
+            digitalWrite(pinCW, LOW);
+            digitalWrite(pinCCW, HIGH);
         }
 
         void setSpeed(float x) {
             float vel = abs(x);
             if (vel < 0.01) {
-                analogWrite(pinForward, 0);
-                analogWrite(pinBackward, 0);
+                analogWrite(pinSpeed, 0);
             }
            
             int pwm = fmap(vel, 0, MAX_W, 0, 255);
             if (x>0) {
-                analogWrite(pinForward, pwm);
-                analogWrite(pinBackward, 0);
+                setForward();
             } else {
-                analogWrite(pinForward, 0);
-                analogWrite(pinBackward, pwm);
+                setBackward();
             }
+            analogWrite(pinSpeed, pwm);
         }
 
 
@@ -67,8 +80,8 @@ class SteeringWheel{
 
             stepper=  new AccelStepper(AccelStepper::DRIVER, pinStep, pinDir);
             stepper->setMinPulseWidth(20);
-            stepper->setMaxSpeed(200);
-            stepper->setAcceleration(200.0);
+            stepper->setMaxSpeed(800);
+            stepper->setAcceleration(4800.0);
         }
 
         void moveToAngle(float angle) {
@@ -80,19 +93,18 @@ class SteeringWheel{
             stepper->run();
         }
 
-        private:
-            int angleToStep(float angle){
-                //convert the desired angle for the stepper motor into
-                // the number of steps to reach the desired position
-                angle= radToDeg(angle);
-                return (int)(angle/stepper_resolution*microstep)*reduction_ratio;
-            }
+        int angleToStep(float angle){
+            //convert the desired angle for the stepper motor into
+            // the number of steps to reach the desired position
+            angle= angle*180 / 3.1415;
+            return (int)(angle/stepper_resolution*microstep)*reduction_ratio;
+        }
 
-            float stepToAngle(int step){
-                //convert the number of steps into the angle
-                float angle=(float)(step*stepper_resolution/microstep)/180*PI;
-                return angle/reduction_ratio;
-            }
+        float stepToAngle(int step){
+            //convert the number of steps into the angle
+            float angle=(float)(step*stepper_resolution/microstep)/180*PI;
+            return angle/reduction_ratio;
+        }
 };
 
 
