@@ -68,6 +68,8 @@
 #define STP3 9
 #define DIR4 10
 #define STP4 11
+#define DIR5 12
+#define STP5 13
 #define ALRM 30
 #define PEND 31
 

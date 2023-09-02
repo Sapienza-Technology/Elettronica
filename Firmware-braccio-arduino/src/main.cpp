@@ -3,7 +3,7 @@
 
 ros::NodeHandle nh;
 //number of joints and which joint is a servo motor
-#define N_JOINT 5
+#define N_JOINT 6
 
 class MyStepper{
     private:
@@ -78,8 +78,8 @@ class MyStepper{
 
 //res= step/n_revolution
 float stepper_resolution=1.8;
-float motor_reduction[]={60,20,20,5,1.5};
-int microstep[]={4,4,16,4,4};
+float motor_reduction[]={60,20,20,5,1.5,1.5};
+int microstep[]={4,4,4,4,4,4};
 //velocities and position to reach for the arm
 float targetVelocities[6];
 float targetPositions[6];
@@ -94,12 +94,12 @@ MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction
 MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], 2*PI, PI, 20);
 MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20);
 MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], 2*PI, PI, 20);
+MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], 2*PI, PI, 20);
 
 //array of stepper motors
-MyStepper steppers[]={stepper1, stepper2, stepper3, stepper4, stepper5};
+MyStepper steppers[]={stepper1, stepper2, stepper3, stepper4,stepper5, stepper6};
 
-
-//subscribe to ros topic
+//suR5cribe to ros topic
 ros::Subscriber<std_msgs::Float32MultiArray> armPosSub("firmware_arm_pos", setTargetPos_cb);
 ros::Subscriber<std_msgs::Float32MultiArray> armVelSub("firmware_arm_vel", setTargetVel_cb);
 
@@ -120,6 +120,7 @@ void setTargetPos_cb(const std_msgs::Float32MultiArray& cmd) {
     stepper3.setPos(targetPositions[2]);
     stepper4.setPos(targetPositions[3]);
     stepper5.setPos(targetPositions[4]);
+    stepper6.setPos(targetPositions[5]);
 
 
 }
@@ -157,6 +158,7 @@ void loop() {
     stepper3.run();
     stepper4.run();
     stepper5.run();
+    stepper6.run();
     
 
 
