@@ -67,6 +67,7 @@ class MyStepper{
         stepper.setSpeed(target_vel);
 
     }
+    
 
     void run() {
         stepper.run();
@@ -78,11 +79,12 @@ class MyStepper{
 
 //res= step/n_revolution
 float stepper_resolution=1.8;
-float motor_reduction[]={60,20,20,5,1.5,1.5};
-int microstep[]={4,4,4,4,4,4};
+float motor_reduction[]={60,30,20,5,1.43,1.74,1};
+int microstep[]={8,8,8,8,8,8,8};
 //velocities and position to reach for the arm
 float targetVelocities[6];
 float targetPositions[6];
+float gripperPosition;
 //long currentPositions[6];
 
 
@@ -95,6 +97,7 @@ MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction
 MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20);
 MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], 2*PI, PI, 20);
 MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], 2*PI, PI, 20);
+MyStepper stepper7(STP6, DIR6, stepper_resolution, microstep[6], motor_reduction[6], PI/2, PI, 20);
 
 //array of stepper motors
 MyStepper steppers[]={stepper1, stepper2, stepper3, stepper4,stepper5, stepper6};
@@ -102,6 +105,7 @@ MyStepper steppers[]={stepper1, stepper2, stepper3, stepper4,stepper5, stepper6}
 //suR5cribe to ros topic
 ros::Subscriber<std_msgs::Float32MultiArray> armPosSub("firmware_arm_pos", setTargetPos_cb);
 ros::Subscriber<std_msgs::Float32MultiArray> armVelSub("firmware_arm_vel", setTargetVel_cb);
+ros::Subscriber<std_msgs::Float32> armPinzaSub("firmware_arm_pinza", pinza_cb);
 
 //received a desired position for the armstepper5
 void setTargetPos_cb(const std_msgs::Float32MultiArray& cmd) {
@@ -141,6 +145,14 @@ void setTargetVel_cb(const std_msgs::Float32MultiArray& cmd) {
     }
 }
 
+//received a desired position for the armstepper5
+void pinza_cb(const std_msgs::Float32& cmd) {
+    //extract data from message
+    gripperPosition = cmd.data;
+
+    stepper7.setPos(gripperPosition);
+}
+
 
 void setup() {
    
@@ -148,6 +160,7 @@ void setup() {
     nh.initNode();
     nh.subscribe(armPosSub);
     nh.subscribe(armVelSub);
+    nh.subscribe(armPinzaSub);
    
     }
 
@@ -159,7 +172,7 @@ void loop() {
     stepper4.run();
     stepper5.run();
     stepper6.run();
-    
+    stepper7.run();
 
 
     /*
