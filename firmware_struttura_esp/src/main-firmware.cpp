@@ -95,11 +95,10 @@ AccelStepperI2C steering_FR(&wrapper);
 AccelStepperI2C steering_RL(&wrapper);
 AccelStepperI2C steering_RR(&wrapper);
 
-
-
 AccelStepperI2C steering[4] = {steering_FL, steering_FR, steering_RL, steering_RR};
 
-
+//Drilling stepper
+AccelStepperI2C drillStepper(&wrapper);
 //a float32 multiarray is received from ROS
 void vel_cb(const std_msgs::Float32MultiArray& cmd) {
 
@@ -118,7 +117,24 @@ void vel_cb(const std_msgs::Float32MultiArray& cmd) {
 
 }
 
+void drilling_cb(const std_msgs::Float32MultiArray& cmd) {
+  //3 numbers: stepper position, stepper speed, drill speed
+  drillStepper.moveTo(cmd.data[0]);
+  drillStepper.setSpeed(cmd.data[1]);
+
+  if (cmd.data[2]>0) {
+    digitalWrite(DRILL_CW, HIGH);
+    digitalWrite(DRILL_CCW, LOW);
+  } else {
+    digitalWrite(DRILL_CW, LOW);
+    digitalWrite(DRILL_CCW, HIGH);
+  }
+  //1 is max speed
+  pwm.setPWM(DRILL_IDX, 0, fmap(abs(cmd.data[2]), 0, 1, 0, 4095));
+}
 ros::Subscriber<std_msgs::Float32MultiArray> velSub("wheel_velocities", vel_cb);
+ros::Subscriber<std_msgs::Float32MultiArray> drillingSub("drilling_commands", drilling_cb);
+
 
 void setup(){  
   Serial.begin(57600);
@@ -139,10 +155,21 @@ void setup(){
     //steering[i].moveTo(angleToStep(-PI/4));	
   }
 
+  pinMode(DRILL_CW, OUTPUT);
+  digitalWrite(DRILL_CW, LOW);
+  pinMode(DRILL_CCW, OUTPUT);
+  digitalWrite(DRILL_CCW, LOW);
+  drillStepper.attach(AccelStepper::DRIVER,DRILL_STEP, DRILL_DIR);
+  drillStepper.setMinPulseWidth(20);
+  drillStepper.setAcceleration(4800.0);
+  drillStepper.setMaxSpeed(2400);
+
+
 
   //wheel_ML.setSpeed(7);
   nh.initNode();
   nh.subscribe(velSub);
+  nh.subscribe(drillingSub);
 
 }
 

@@ -45,3 +45,14 @@ Z=CW CCW S (Speed)
 
 #define STEER_R_R_S 10
 #define STEER_R_R_D 11
+
+//DRILLING
+
+//dc motor to rotate
+#define DRILL_CW 12
+#define DRILL_CCW 13
+#define DRILL_IDX 7
+
+//stepper motor to move up and down
+#define DRILL_STEP 14
+#define DRILL_DIR 15
