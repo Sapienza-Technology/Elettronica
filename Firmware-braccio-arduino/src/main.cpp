@@ -8,7 +8,7 @@ ros::NodeHandle nh;
 class MyStepper{
     private:
     double target_position;
-    double target_vel;
+    double target_vel=0;
 
     public:
     int stp_pin;
@@ -21,11 +21,11 @@ class MyStepper{
     float min_pulse_width;
     AccelStepper stepper;
 
-    int angleToStep(float angle){
+    long int angleToStep(float angle){
         //convert the desired angle for the stepper motor into
         // the number of steps to reach the desired position
         angle=angle/PI *180.0;
-        return (int)(((angle/stepper_resolution)*microstep)*motor_reduction);
+        return (long int)(((angle/stepper_resolution)*microstep)*motor_reduction);
     }
 
     MyStepper(int stp_pin, int dir_pin, float stepper_resolution, int microstep, float motor_reduction, float max_speed, float acceleration, float min_pulse_width){
@@ -41,6 +41,7 @@ class MyStepper{
         stepper.setMinPulseWidth(min_pulse_width);
         float max_step_speed=angleToStep(max_speed);
         stepper.setMaxSpeed(max_step_speed*speedMultiplier);
+        
         //stepper.setSpeed(angleToStep(PI/36));
 
         float acceleration_steps=angleToStep(acceleration);
@@ -60,6 +61,9 @@ class MyStepper{
         //angle is in radians
         target_position=angleToStep(angle);
         stepper.moveTo(target_position);
+        if (target_vel!=0){
+            stepper.setSpeed(target_vel);
+        }
     }
 
     void setVel(float vel){
