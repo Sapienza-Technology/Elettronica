@@ -122,6 +122,7 @@ void drilling_cb(const std_msgs::Float32MultiArray& cmd) {
   drillStepper.moveTo(cmd.data[0]);
   drillStepper.setSpeed(cmd.data[1]);
 
+  //TODO move with 2 or 3 pins?
   if (cmd.data[2]>0) {
     digitalWrite(DRILL_CW, HIGH);
     digitalWrite(DRILL_CCW, LOW);
