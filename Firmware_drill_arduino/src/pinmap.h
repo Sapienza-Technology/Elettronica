@@ -5,7 +5,6 @@
 //dc motor to rotate
 #define DRILL_CW 12
 #define DRILL_CCW 13
-#define DRILL_PWM 2
 
 //stepper motor to move up and down
 #define DRILL_STEP 14
