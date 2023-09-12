@@ -121,16 +121,15 @@ void drilling_cb(const std_msgs::Float32MultiArray& cmd) {
   //3 numbers: stepper position, stepper speed, drill speed
   drillStepper.moveTo(cmd.data[0]);
   drillStepper.setSpeed(cmd.data[1]);
-
-  if (cmd.data[2]>0) {
-    digitalWrite(DRILL_CW, HIGH);
-    digitalWrite(DRILL_CCW, LOW);
-  } else {
-    digitalWrite(DRILL_CW, LOW);
-    digitalWrite(DRILL_CCW, HIGH);
-  }
   //1 is max speed
-  analogWrite(DRILL_PWM, fmap(abs(cmd.data[2]), 0, 1, 0, 255));
+  int pwm= (int) fmap(abs(cmd.data[2]), 0, 1, 0, 255);
+  if (cmd.data[2]>0) {
+    analogWrite(DRILL_CW, pwm);
+    analogWrite(DRILL_CCW, LOW);
+  } else {
+    analogWrite(DRILL_CW, LOW);
+    analogWrite(DRILL_CCW, pwm);
+  }
 }
 ros::Subscriber<std_msgs::Float32MultiArray> drillingSub("drilling_commands", drilling_cb);
 
