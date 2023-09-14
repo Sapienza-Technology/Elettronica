@@ -63,8 +63,6 @@ class MyStepper{
         stepper.moveTo(target_position);
         if (target_vel!=0){
             stepper.setSpeed(target_vel);
-            // print the target velocity
-            Serial.println(target_vel);
         }
     }
 
