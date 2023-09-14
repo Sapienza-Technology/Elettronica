@@ -63,6 +63,8 @@ class MyStepper{
         stepper.moveTo(target_position);
         if (target_vel!=0){
             stepper.setSpeed(target_vel);
+            // print the target velocity
+            Serial.println(target_vel);
         }
     }
 
@@ -70,6 +72,13 @@ class MyStepper{
         target_vel=angleToStep(vel);
         stepper.setSpeed(target_vel);
 
+    }
+
+    void setPos_stepper(float pos){
+        //set the desired position for the stepper motor
+        //angle is in radians
+        target_position=pos/0.1016;
+        stepper.moveTo(target_position);
     }
     
 
@@ -154,7 +163,7 @@ void pinza_cb(const std_msgs::Float32& cmd) {
     //extract data from message
     gripperPosition = cmd.data;
 
-    stepper7.setPos(gripperPosition);
+    stepper7.setPos_stepper(gripperPosition);
 }
 
 
