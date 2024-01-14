@@ -60,8 +60,8 @@
 
 #define DIR0 2
 #define STP0 3
-#define DIR1 4
-#define STP1 5
+#define DIR1 44
+#define STP1 45
 #define DIR2 6
 #define STP2 7
 #define DIR3 8

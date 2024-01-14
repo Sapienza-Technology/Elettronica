@@ -6,11 +6,9 @@ ros::NodeHandle nh;
 #define N_JOINT 6
 
 class MyStepper{
-    private:
+    public:
     double target_position;
     double target_vel=0;
-
-    public:
     int stp_pin;
     int dir_pin;
     float stepper_resolution;
@@ -41,6 +39,7 @@ class MyStepper{
         stepper.setMinPulseWidth(min_pulse_width);
         float max_step_speed=angleToStep(max_speed);
         stepper.setMaxSpeed(max_step_speed*speedMultiplier);
+        stepper.setSpeed(max_step_speed*speedMultiplier);
         
         //stepper.setSpeed(angleToStep(PI/36));
 
@@ -59,29 +58,31 @@ class MyStepper{
     void setPos(float angle){
         //set the desired position for the stepper motor
         //angle is in radians
-        target_position=angleToStep(angle);
-        stepper.moveTo(target_position);
         if (target_vel!=0){
+            stepper.setMaxSpeed(target_vel);
             stepper.setSpeed(target_vel);
         }
+        target_position=angleToStep(angle);
+        stepper.moveTo(target_position);
+        //stepper.setSpeed(target_vel);
     }
 
     void setVel(float vel){
+        stepper.setMaxSpeed(target_vel);
         target_vel=angleToStep(vel);
         stepper.setSpeed(target_vel);
-
     }
 
     void setPos_stepper(float pos){
         //set the desired position for the stepper motor
         //angle is in radians
-        target_position=pos/0.1016;
+        target_position=pos/0.4064;
         stepper.moveTo(target_position);
     }
     
 
     void run() {
-        stepper.run();
+        stepper.runSpeed();
     }
 
     
@@ -102,13 +103,13 @@ float gripperPosition;
 //previously acceleration was set to 7200, now setting in rad/s^2 (considering reduction and microsteps)
 //same for maxSpeed
 //arguments: (stp_pin, dir_pin, motor_resolution, motor_microsteps, motor_reduction, max_speed, acceleration, min_pulse_width)
-MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], 2*PI, PI, 20);
-MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], 2*PI, PI, 20);
-MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], 2*PI, PI, 20);
-MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20);
-MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], 2*PI, PI, 20);
-MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], 2*PI, PI, 20);
-MyStepper stepper7(STP6, DIR6, stepper_resolution, microstep[6], motor_reduction[6], PI/2, PI, 20);
+MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], 2*PI, PI/4, 20);
+MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], 2*PI, PI/4, 20);
+MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], PI/2, PI/4, 20);
+MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], PI/2, PI/4, 20);
+MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], PI/2, PI/4, 20);
+MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], PI/4, PI/4, 20);
+MyStepper stepper7(STP6, DIR6, stepper_resolution, microstep[6], motor_reduction[6], PI/4, PI/4, 20);
 
 //array of stepper motors
 MyStepper steppers[]={stepper1, stepper2, stepper3, stepper4,stepper5, stepper6};
