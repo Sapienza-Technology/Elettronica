@@ -25,7 +25,8 @@ ros::NodeHandle nh;
 
 class MyStepper{
     public:
-    double target_position;
+    double target_position=2000;
+    double target_angle=200;
     double target_vel=0;
     int stp_pin;
     int dir_pin;
@@ -71,12 +72,13 @@ class MyStepper{
     float stepToAngle(int step){
         //convert the number of steps into the angle
         
-        return (float)(step*stepper_resolution/microstep)/(180*PI*motor_reduction);
+        return (float)(step*stepper_resolution/microstep)/(180*motor_reduction)*PI;
     }
 
     void setPos(float angle){
         //set the desired position for the stepper motor
         //angle is in radians
+        target_angle = angle*180/PI;
         target_position=angleToStep(angle);
     }
 
@@ -101,10 +103,21 @@ class MyStepper{
         estrad = estdeg*PI/180;
         eststep = angleToStep(estrad);
 
-        command_speed = (target_position - eststep)*motor_reduction*K;
+        command_speed = (target_position - eststep)*K;
         stepper.setSpeed(command_speed);
 
-        stepper.runSpeed();
+        Serial.println("Angle estimation");
+        Serial.print(estdeg);
+        Serial.print("°  \n");
+        Serial.println("Reference");
+        Serial.print(stepToAngle(target_position)*180/PI);
+        Serial.print("°  \n");
+        Serial.println("Command speed");
+        Serial.print(command_speed);
+        Serial.print("step/s  \n");
+        Serial.println("Error angle");
+        Serial.print(stepToAngle((target_position - eststep))*180/PI);
+        Serial.print("°\n");
     }
 
     
@@ -126,8 +139,8 @@ float gripperPosition;
 //same for maxSpeed
 //arguments: (stp_pin, dir_pin, motor_resolution, motor_microsteps, motor_reduction, max_speed, acceleration, min_pulse_width)
 MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], 2*PI, PI, 20, 1);
-MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], 2*PI, PI, 20, 2);
-MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], 2*PI, PI, 20, 3);
+MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], 2*PI, PI, 20, 7);
+MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], 2*PI, PI, 20, 6);
 MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20, 4);
 MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], 2*PI, PI, 20, 5);
 MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], 2*PI, PI, 20, 6);
@@ -189,7 +202,7 @@ void pinza_cb(const std_msgs::Float32& cmd) {
 
 
 void setup() {
-    Wire.begin(); // specify SDA and SCL pins
+    Wire.begin(37,36,400000); // specify SDA and SCL pins
     S1,S2,S3=0;
     Serial.begin(115200);
 
@@ -207,20 +220,20 @@ void setup() {
 void loop() {
     //run the stepper motors
 
-    stepper1.run();
-    delay(5);
-    stepper2.run();
-    delay(5);
+    //stepper1.run();
+    //delay(5);
+    //stepper2.run();
+    //delay(5);
     stepper3.run();
-    delay(5);
-    stepper4.run();
-    delay(5);
-    stepper5.run();
-    delay(5);
-    stepper6.run();
-    delay(5);
-    stepper7.run();
-    delay(5);
+    delay(2000);
+    //stepper4.run();
+    //delay(5);
+    //stepper5.run();
+    //delay(5);
+    //stepper6.run();
+    //delay(5);
+    //stepper7.run();
+    //delay(5);
 
     //Serial.print(estdeg); // il primo dato l'ho fatto passare per kalman per vedere la differenza con la lettura cruda
     //Serial.print("°   ");
