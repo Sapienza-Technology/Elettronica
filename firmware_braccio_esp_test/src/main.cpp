@@ -30,8 +30,8 @@ ros::NodeHandle nh;
 
 class MyStepper{
     public:
-    double target_position;
-    double target_angle;
+    double target_position=2000;
+    double target_angle=200;
     double target_vel=0;
     int stp_pin;
     int dir_pin;
@@ -102,33 +102,27 @@ class MyStepper{
     
 
     void run() {
-        //MP.selectChannel(channel_number);  //la funzione selectChannel() attiva solo il canale richiesto e disattiva automaticamente tutti gli altri
+        MP.selectChannel(channel_number);  //la funzione selectChannel() attiva solo il canale richiesto e disattiva automaticamente tutti gli altri
         S1=as5600.readAngle()*AS5600_RAW_TO_DEGREES; // costante di conversione della libreria in gradi, disponibile anche in radianti
         estdeg=kalmanrot.updateEstimate(S1);
-        while(estdeg > 180){
-            estdeg -= 360;
-        }
-        while(estdeg < -180){
-            estdeg += 360;
-        }
-
         estrad = estdeg*PI/180;
         eststep = angleToStep(estrad);
 
-        errorstep = -(target_position - eststep);
-
-        //bufferstep = stepper1.angleToStep(PI/(360));
-        //Serial.println(errorstep);
-        //Serial.println(errorstep);
-        //if (abs(errorstep) < bufferstep){
-        //    stepper1.stepper.setSpeed(0);
-        //    stepper1.stepper.runSpeed();
-        //    return;
-        //} 
-
-        command_speed = errorstep*K;
+        command_speed = (target_position - eststep)*K;
         stepper.setSpeed(command_speed);
-        stepper.runSpeed();
+
+        Serial.println("Angle estimation");
+        Serial.print(estdeg);
+        Serial.print("°  \n");
+        Serial.println("Reference");
+        Serial.print(stepToAngle(target_position)*180/PI);
+        Serial.print("°  \n");
+        Serial.println("Command speed");
+        Serial.print(command_speed);
+        Serial.print("step/s  \n");
+        Serial.println("Error angle");
+        Serial.print(stepToAngle((target_position - eststep))*180/PI);
+        Serial.print("°\n");
     }
 
     
@@ -152,10 +146,10 @@ float gripperPosition;
 MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], 2*PI, PI, 20, 1);
 MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], 2*PI, PI, 20, 7);
 MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], 2*PI, PI, 20, 6);
-MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20, 5);
-MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], 2*PI, PI, 20, 4);
-MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], 2*PI, PI, 20, 3);
-MyStepper stepper7(STP6, DIR6, stepper_resolution, microstep[6], motor_reduction[6], PI/2, PI, 20, 2);
+MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20, 4);
+MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], 2*PI, PI, 20, 5);
+MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], 2*PI, PI, 20, 6);
+MyStepper stepper7(STP6, DIR6, stepper_resolution, microstep[6], motor_reduction[6], PI/2, PI, 20, 7);
 
 //array of stepper motors
 MyStepper steppers[]={stepper1, stepper2, stepper3, stepper4,stepper5, stepper6};
@@ -220,50 +214,81 @@ void setup() {
     as5600.begin();  // pin dichiarati per lo stesso motivo di cui sopra
     as5600.setDirection(0); //lettura con incremento in senso orario
    
-    nh.getHardware()->setBaud(115200);
-    nh.initNode();
-    nh.subscribe(armPosSub);
-    nh.subscribe(armVelSub);
-    nh.subscribe(armPinzaSub);
+    //nh.getHardware()->setBaud(115200);
+    //nh.initNode();
+    //nh.subscribe(armPosSub);
+    //nh.subscribe(armVelSub);
+    //nh.subscribe(armPinzaSub);
+    k = 100;
     MP.selectChannel(1);
+    target = 400;
     }
 
 void loop() {
     //run the stepper motors
-    //MP.selectChannel(1);  //la funzione selectChannel() attiva solo il canale richiesto e disattiva automaticamente tutti gli altri
-    //S1=as5600.readAngle()*AS5600_RAW_TO_DEGREES; // costante di conversione della libreria in gradi, disponibile anche in radianti
-    //estdeg=kalmanrot.updateEstimate(S1);
-    //while(estdeg > 180){
-    //    estdeg -= 360;
+    
+    S1=as5600.readAngle()*AS5600_RAW_TO_DEGREES; // costante di conversione della libreria in gradi, disponibile anche in radianti
+    estdeg = kalmanrot.updateEstimate(S1);
+    while(estdeg > 180){
+        estdeg -= 360;
+    }
+    while(estdeg < -180){
+        estdeg += 360;
+    }
+    estrad = estdeg*PI/180.0;
+    eststep = stepper1.angleToStep(estrad);
+    goalstep = stepper1.angleToStep(PI/2);
+    bufferstep = stepper1.angleToStep(PI/(360));
+    
+
+    errorstep = -(goalstep - eststep);
+    //Serial.println(errorstep);
+    //Serial.println(errorstep);
+    //if (abs(errorstep) < bufferstep){
+    //    stepper1.stepper.setSpeed(0);
+    //    stepper1.stepper.runSpeed();
+    //    return;
+    //} 
+    command_speed = errorstep*K;
+    stepper1.stepper.setSpeed(command_speed);
+    stepper1.stepper.runSpeed();
+
+    //if (k == 0){
+    //    Serial.println("Error angle");
+    //    Serial.println(stepper1.stepToAngle((400.0 - eststep))*180.0/PI);
+    //    //Serial.println(stepper1.stepToAngle((50 - eststep)));
+    //    Serial.println(command_speed);
+    //    k=10;
+
+    //    Serial.println("Angle estimation");
+    //    Serial.print(estdeg);
     //}
-    //while(estdeg < -180){
-    //    estdeg += 360;
+    //else{
+    //    k-=1;
     //}
-//
-    //estrad = estdeg*PI/180;
-    //eststep = stepper1.angleToStep(estrad);
-//
-    //errorstep = -(stepper1.target_position - eststep);
-//
-    ////bufferstep = stepper1.angleToStep(PI/(360));
-    ////Serial.println(errorstep);
-    ////Serial.println(errorstep);
-    ////if (abs(errorstep) < bufferstep){
-    ////    stepper1.stepper.setSpeed(0);
-    ////    stepper1.stepper.runSpeed();
-    ////    return;
-    ////} 
-//
-    //command_speed = errorstep*K;
-    //stepper1.stepper.setSpeed(command_speed);
-    //stepper1.stepper.runSpeed();
-//
-    stepper1.run();
+    //delay(5);
+
+
+    //Serial.println("Angle estimation");
+    //Serial.print(estdeg);
+    //Serial.print("°  \n");
+    //Serial.println("Reference");
+    //Serial.print(stepper1.stepToAngle(5000)*180/PI);
+    //Serial.print("°  \n");
+    //Serial.println("Command speed");
+    //Serial.print(command_speed);
+    //Serial.print("step/s  \n");
+    //Serial.println("Error angle");
+    //Serial.print(stepper1.stepToAngle((5000 - eststep))*180/PI);
+    //Serial.print("°\n");
+
+    //delay(100);
+    //stepper1.run();
     //delay(5);
     //stepper2.run();
     //delay(5);
     //stepper3.run();
-    //delay(5);
+    //delay(2000);
     //stepper4.run();
     //delay(5);
     //stepper5.run();
@@ -281,6 +306,17 @@ void loop() {
     //Serial.print("°\n"); //non il modo migliore per stampare, ma si fa quel che si può
     
     //delay(10);
+
+    /*
+    //add positions to current positions
+    posMultiArray.data[0] = (float) stepToAngle(stepper1.currentPosition())/motor_reduction[0];
+    posMultiArray.data[1] = (float) stepToAngle(stepper2.currentPosition())/motor_reduction[1];
+    posMultiArray.data[2] = (float) stepToAngle(stepper3.currentPosition())/motor_reduction[2];
+    posMultiArray.data[3] = (float) stepToAngle(stepper4.currentPosition())/motor_reduction[3];
+    posMultiArray.data[4] = (float) stepToAngle(stepper5.currentPosition())/motor_reduction[5];
+    
+    posPub.publish(&posMultiArray);
+    */
     
     nh.spinOnce();
     ////delay(100);

@@ -42,7 +42,7 @@ AS5600 as5600;
 
 class MyStepper{
     public:
-    double target_position;
+    double target_position = 800;
     double target_vel=0;
     int stp_pin;
     int dir_pin;
@@ -63,9 +63,9 @@ class MyStepper{
     }
 
     MyStepper(int stp_pin, int dir_pin, float stepper_resolution, int microstep, float motor_reduction, float max_speed, float acceleration, float min_pulse_width, int channel_number){
-        //pinMode(stp_pin, OUTPUT);
-        //pinMode(dir_pin, OUTPUT);
-        //stepper=AccelStepper(AccelStepper::DRIVER, stp_pin, dir_pin);
+        pinMode(stp_pin, OUTPUT);
+        pinMode(dir_pin, OUTPUT);
+        stepper=AccelStepper(AccelStepper::DRIVER, stp_pin, dir_pin);
 
         this->stepper_resolution=stepper_resolution;
         this->microstep=microstep;
@@ -73,14 +73,14 @@ class MyStepper{
         this->channel_number=channel_number;
         int speedMultiplier=1;
 
-        //stepper.setMinPulseWidth(min_pulse_width);
+        stepper.setMinPulseWidth(min_pulse_width);
         float max_step_speed=angleToStep(max_speed);
-        //stepper.setMaxSpeed(max_step_speed*speedMultiplier);
+        stepper.setMaxSpeed(max_step_speed*speedMultiplier);
         
         //stepper.setSpeed(angleToStep(PI/36));
 
         float acceleration_steps=angleToStep(acceleration);
-        //stepper.setAcceleration(acceleration_steps);
+        stepper.setAcceleration(acceleration_steps);
     }
 
 
@@ -118,19 +118,21 @@ class MyStepper{
         estrad = estdeg*PI/180;
         eststep = angleToStep(estrad);
 
-        command_speed = (10000 - eststep)*motor_reduction*K;
-        //stepper.setSpeed(command_speed);
-
-        //stepper.runSpeed();
+        command_speed = (target_position - eststep)*K;
+        stepper.setSpeed(command_speed);
+        stepper.runSpeed();
 
         Serial.println("Angle estimation");
         Serial.print(estdeg);
+        Serial.print("°  \n");
+        Serial.println("Reference");
+        Serial.print(stepToAngle(target_position)*180/PI);
         Serial.print("°  \n");
         Serial.println("Command speed");
         Serial.print(command_speed);
         Serial.print("step/s  \n");
         Serial.println("Error angle");
-        Serial.print(stepToAngle((10000 - eststep)));
+        Serial.print(stepToAngle((target_position - eststep))*180/PI);
         Serial.print("°\n");
     }
 
@@ -152,7 +154,8 @@ float gripperPosition;
 //previously acceleration was set to 7200, now setting in rad/s^2 (considering reduction and microsteps)
 //same for maxSpeed
 //arguments: (stp_pin, dir_pin, motor_resolution, motor_microsteps, motor_reduction, max_speed, acceleration, min_pulse_width)
-MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], 2*PI, PI, 20, 1);
+MyStepper stepper1(5,6, stepper_resolution, 2, 30, 2*PI, PI, 20, 1);
+//MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], 2*PI, PI, 20, 1);
 //MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], 2*PI, PI, 20, 2);
 //MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], 2*PI, PI, 20, 3);
 //MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20, 4);
@@ -216,7 +219,7 @@ MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction
 
 
 void setup() {
-    S1,S2,S3=0;
+    S1=0;
     Serial.begin(9600);
     Serial.println("Ciaooooooo\n");
     Wire.begin(); // specify SDA and SCL pins
@@ -234,8 +237,33 @@ void setup() {
 void loop() {
     //run the stepper motors
 
-    stepper1.run();
+    //stepper1.run();
+    S1=as5600.readAngle()*AS5600_RAW_TO_DEGREES; // costante di conversione della libreria in gradi, disponibile anche in radianti
+    estdeg=kalmanrot.updateEstimate(S1);
+    estrad = estdeg*PI/180;
+    eststep = stepper1.angleToStep(estrad);
+
+    command_speed = (5000 - eststep)*K*10;
+    stepper1.stepper.setSpeed(command_speed);
+    stepper1.stepper.runSpeed();
+
+    //Serial.println("Angle estimation");
+    //Serial.print(estdeg);
+    //Serial.print("°  \n");
+    //Serial.println("Reference");
+    //Serial.print(stepper1.stepToAngle(5000)*180/PI);
+    //Serial.print("°  \n");
+    //Serial.println("Command speed");
+    //Serial.print(command_speed);
+    //Serial.print("step/s  \n");
+    //Serial.println("Error angle");
+    //Serial.print(stepper1.stepToAngle((5000 - eststep))*180/PI);
+    //Serial.print("°\n");
+
     delay(5);
+    //stepper1.stepper.moveTo(10000);
+    //stepper1.stepper.setSpeed(500);
+    //stepper1.stepper.runSpeed();
     //stepper2.run();
     //delay(5);
     //stepper3.run();
