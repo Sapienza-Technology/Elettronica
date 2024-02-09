@@ -42,6 +42,7 @@ class MyStepper{
     float acceleration;
     float min_pulse_width;
     int channel_number;
+    float joint_init;
     AccelStepper stepper;
 
     long int angleToStep(float angle){
@@ -51,7 +52,7 @@ class MyStepper{
         return (long int)(((angle/stepper_resolution)*microstep)*motor_reduction);
     }
 
-    MyStepper(int stp_pin, int dir_pin, float stepper_resolution, int microstep, float motor_reduction, float max_speed, float acceleration, float min_pulse_width, int channel_number){
+    MyStepper(int stp_pin, int dir_pin, float stepper_resolution, int microstep, float motor_reduction, float joint_init, float max_speed, float acceleration, float min_pulse_width, int channel_number){
         pinMode(stp_pin, OUTPUT);
         pinMode(dir_pin, OUTPUT);
         stepper=AccelStepper(AccelStepper::DRIVER, stp_pin, dir_pin);
@@ -60,6 +61,7 @@ class MyStepper{
         this->microstep=microstep;
         this->motor_reduction=motor_reduction;
         this->channel_number=channel_number;
+        this->joint_init = joint_init;
         int speedMultiplier=1;
 
         stepper.setMinPulseWidth(min_pulse_width);
@@ -102,9 +104,9 @@ class MyStepper{
     
 
     void run() {
-        //MP.selectChannel(channel_number);  //la funzione selectChannel() attiva solo il canale richiesto e disattiva automaticamente tutti gli altri
+        MP.selectChannel(channel_number);  //la funzione selectChannel() attiva solo il canale richiesto e disattiva automaticamente tutti gli altri
         S1=as5600.readAngle()*AS5600_RAW_TO_DEGREES; // costante di conversione della libreria in gradi, disponibile anche in radianti
-        estdeg=kalmanrot.updateEstimate(S1);
+        estdeg=kalmanrot.updateEstimate(S1)-joint_init;
         while(estdeg > 180){
             estdeg -= 360;
         }
@@ -117,9 +119,7 @@ class MyStepper{
 
         errorstep = -(target_position - eststep);
 
-        //bufferstep = stepper1.angleToStep(PI/(360));
-        //Serial.println(errorstep);
-        //Serial.println(errorstep);
+        //Serial.println(estdeg);
         //if (abs(errorstep) < bufferstep){
         //    stepper1.stepper.setSpeed(0);
         //    stepper1.stepper.runSpeed();
@@ -138,6 +138,7 @@ class MyStepper{
 //res= step/n_revolution
 float stepper_resolution=1.8;
 float motor_reduction[]={20,30,20,5,1.43,1.74,1};
+float joint_init[] = {0,0,99.44,34.20,0,0};
 int microstep[]={8,8,8,8,8,8,8};
 //velocities and position to reach for the arm
 float targetVelocities[6];
@@ -149,13 +150,13 @@ float gripperPosition;
 //previously acceleration was set to 7200, now setting in rad/s^2 (considering reduction and microsteps)
 //same for maxSpeed
 //arguments: (stp_pin, dir_pin, motor_resolution, motor_microsteps, motor_reduction, max_speed, acceleration, min_pulse_width)
-MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], 2*PI, PI, 20, 1);
-MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], 2*PI, PI, 20, 7);
-MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], 2*PI, PI, 20, 6);
-MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], 2*PI, PI, 20, 5);
-MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], 2*PI, PI, 20, 4);
-MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], 2*PI, PI, 20, 3);
-MyStepper stepper7(STP6, DIR6, stepper_resolution, microstep[6], motor_reduction[6], PI/2, PI, 20, 2);
+MyStepper stepper1(STP0, DIR0, stepper_resolution, microstep[0], motor_reduction[0], joint_init[0], 2*PI, PI, 20, 1);
+MyStepper stepper2(STP1, DIR1, stepper_resolution, microstep[1], motor_reduction[1], joint_init[2], 2*PI, PI, 20, 7);
+MyStepper stepper3(STP2, DIR2, stepper_resolution, microstep[2], motor_reduction[2], joint_init[3], 2*PI, PI, 20, 1);
+MyStepper stepper4(STP3, DIR3, stepper_resolution, microstep[3], motor_reduction[3], joint_init[4], 2*PI, PI, 20, 7);
+MyStepper stepper5(STP4, DIR4, stepper_resolution, microstep[4], motor_reduction[4], joint_init[5], 2*PI, PI, 20, 4);
+MyStepper stepper6(STP5, DIR5, stepper_resolution, microstep[5], motor_reduction[5], joint_init[6], 2*PI, PI, 20, 3);
+MyStepper stepper7(STP6, DIR6, stepper_resolution, microstep[6], motor_reduction[6], joint_init[0], PI/2, PI, 20, 2); // aggiusta init
 
 //array of stepper motors
 MyStepper steppers[]={stepper1, stepper2, stepper3, stepper4,stepper5, stepper6};
@@ -245,10 +246,30 @@ void loop() {
 //
     //errorstep = -(stepper1.target_position - eststep);
 //
-    ////bufferstep = stepper1.angleToStep(PI/(360));
-    ////Serial.println(errorstep);
-    ////Serial.println(errorstep);
-    ////if (abs(errorstep) < bufferstep){
+    //Serial.println(estdeg);
+//
+//
+    //MP.selectChannel(7);  //la funzione selectChannel() attiva solo il canale richiesto e disattiva automaticamente tutti gli altri
+    //S1=as5600.readAngle()*AS5600_RAW_TO_DEGREES; // costante di conversione della libreria in gradi, disponibile anche in radianti
+    //estdeg=kalmanrot.updateEstimate(S1);
+    //while(estdeg > 180){
+    //    estdeg -= 360;
+    //}
+    //while(estdeg < -180){
+    //    estdeg += 360;
+    //}
+//
+    //estrad = estdeg*PI/180;
+    //eststep = stepper1.angleToStep(estrad);
+//
+    //errorstep = -(stepper1.target_position - eststep);
+//
+    //Serial.println(estdeg);
+
+    //bufferstep = stepper1.angleToStep(PI/(360));
+    //Serial.println(errorstep);
+    //Serial.println(errorstep);
+    //if (abs(errorstep) < bufferstep){
     ////    stepper1.stepper.setSpeed(0);
     ////    stepper1.stepper.runSpeed();
     ////    return;
@@ -258,14 +279,14 @@ void loop() {
     //stepper1.stepper.setSpeed(command_speed);
     //stepper1.stepper.runSpeed();
 //
-    stepper1.run();
+    //stepper1.run();
     //delay(5);
     //stepper2.run();
     //delay(5);
-    //stepper3.run();
-    //delay(5);
-    //stepper4.run();
-    //delay(5);
+    stepper3.run();
+    //delay(500);
+    stepper4.run();
+    //delay(500);
     //stepper5.run();
     //delay(5);
     //stepper6.run();
