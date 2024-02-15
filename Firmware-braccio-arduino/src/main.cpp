@@ -82,7 +82,7 @@ class MyStepper{
     
 
     void run() {
-        stepper.runSpeed();
+        stepper.run();
     }
 
     

@@ -127,8 +127,11 @@ class MyStepper{
         //} 
 
         command_speed = errorstep*K;
+
+        Serial.println(estdeg);
+
         stepper.setSpeed(command_speed);
-        stepper.runSpeed();
+        //stepper.runSpeed();
     }
 
     
@@ -138,7 +141,7 @@ class MyStepper{
 //res= step/n_revolution
 float stepper_resolution=1.8;
 float motor_reduction[]={20,30,20,5,1.43,1.74,1};
-float joint_init[] = {0,0,99.44,34.20,0,0};
+float joint_init[] = {0,0,-53,85.87,34.20,0,0};
 int microstep[]={8,8,8,8,8,8,8};
 //velocities and position to reach for the arm
 float targetVelocities[6];
@@ -283,7 +286,7 @@ void loop() {
     //delay(5);
     //stepper2.run();
     //delay(5);
-    stepper3.run();
+    //stepper3.run();
     //delay(500);
     stepper4.run();
     //delay(500);
