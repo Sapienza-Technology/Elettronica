@@ -10,7 +10,7 @@ float S1,S2,S3;
 float estdeg;
 float estrad;
 float command_speed;
-float K=0.8;
+float K=0.1;
 float eststep;
 float target;
 float errorstep;
@@ -87,6 +87,7 @@ class MyStepper{
         //angle is in radians
         target_angle = angle*180/PI;
         target_position=angleToStep(angle);
+        //stepper.moveTo(target_position);
     }
 
     void setVel(float vel){
@@ -128,10 +129,11 @@ class MyStepper{
 
         command_speed = errorstep*K;
 
-        Serial.println(estdeg);
+        Serial.println(estdeg+joint_init);
 
         stepper.setSpeed(command_speed);
-        //stepper.runSpeed();
+        stepper.runSpeed();
+        //stepper.run();
     }
 
     
@@ -141,7 +143,7 @@ class MyStepper{
 //res= step/n_revolution
 float stepper_resolution=1.8;
 float motor_reduction[]={20,30,20,5,1.43,1.74,1};
-float joint_init[] = {0,0,-53,85.87,34.20,0,0};
+float joint_init[] = {0,0,-53,-17.3,-87,0,0};
 int microstep[]={8,8,8,8,8,8,8};
 //velocities and position to reach for the arm
 float targetVelocities[6];
@@ -217,7 +219,7 @@ void pinza_cb(const std_msgs::Float32& cmd) {
 
 
 void setup() {
-    Wire.begin(37,36,400000); // specify SDA and SCL pins
+    Wire.begin(37,36,100000); // specify SDA and SCL pins
     S1,S2,S3=0;
     Serial.begin(115200);
 
