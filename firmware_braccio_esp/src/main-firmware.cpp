@@ -92,7 +92,7 @@ class MyStepper{
 
     void setVel(float vel){
         target_vel=angleToStep(vel);
-        stepper.setSpeed(target_vel);
+        //stepper.setSpeed(target_vel);
 
     }
 
@@ -127,7 +127,7 @@ class MyStepper{
         //    return;
         //} 
 
-        command_speed = errorstep*K;
+        command_speed = errorstep*K;//+target_vel;
 
         Serial.println(estdeg+joint_init);
 

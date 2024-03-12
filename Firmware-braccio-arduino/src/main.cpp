@@ -61,6 +61,8 @@ class MyStepper{
         if (target_vel!=0){
             stepper.setMaxSpeed(target_vel);
             stepper.setSpeed(target_vel);
+            // print the target velocity
+            Serial.println(target_vel);
         }
         target_position=angleToStep(angle);
         stepper.moveTo(target_position);
