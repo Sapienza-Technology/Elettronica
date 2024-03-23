@@ -2,17 +2,21 @@
 //https://hackaday.io/project/183279-accelstepper-the-missing-manual/details
 
 #include <Wire.h>
-
+#include <Arduino.h>
+#include "pinmap.h"
+#include "utils.h"
 #include <ros.h>
+#include <HardwareSerial.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Float32.h>
 
-#include <AccelStepperI2C.h>
+//#include <AccelStepperI2C.h>
 
 #include "pinmap.h"
+#include <AccelStepper.h>
 
 ros::NodeHandle nh;
-I2Cwrapper wrapper(0x40);
+//I2Cwrapper wrapper(0x40);
 //number of joints and which joint is a servo motor
 #define N_JOINT 6
 
@@ -31,7 +35,7 @@ class MyStepper{
     float max_speed;
     float acceleration;
     float min_pulse_width;
-    AccelStepperI2C* stepper;
+    AccelStepper stepper;
 
     long int angleToStep(float angle){
         //convert the desired angle for the stepper motor into
@@ -43,22 +47,22 @@ class MyStepper{
     MyStepper(int stp_pin, int dir_pin, float stepper_resolution, int microstep, float motor_reduction, float max_speed, float acceleration, float min_pulse_width){
         pinMode(stp_pin, OUTPUT);
         pinMode(dir_pin, OUTPUT);
-        stepper = new AccelStepperI2C(&wrapper);
-        stepper->attach(AccelStepper::DRIVER, stp_pin, dir_pin);
+        //stepper = new AccelStepperI2C(&wrapper);
+        stepper = AccelStepper(AccelStepper::DRIVER, stp_pin, dir_pin);
 
         this->stepper_resolution=stepper_resolution;
         this->microstep=microstep;
         this->motor_reduction=motor_reduction;
         int speedMultiplier=1;
 
-        stepper->setMinPulseWidth(min_pulse_width);
+        stepper.setMinPulseWidth(min_pulse_width);
         float max_step_speed=angleToStep(max_speed);
-        stepper->setMaxSpeed(max_step_speed*speedMultiplier);
+        stepper.setMaxSpeed(max_step_speed*speedMultiplier);
         
         //stepper->setSpeed(angleToStep(PI/36));
 
         float acceleration_steps=angleToStep(acceleration);
-        stepper->setAcceleration(acceleration_steps);
+        stepper.setAcceleration(acceleration_steps);
     }
 
 
@@ -73,21 +77,24 @@ class MyStepper{
         //set the desired position for the stepper motor
         //angle is in radians
         target_position=angleToStep(angle);
-        stepper->moveTo(target_position);
+        stepper.moveTo(target_position);
         if (target_vel!=0){
-            stepper->setSpeed(target_vel);
+            stepper.setSpeed(target_vel);
         }
+        //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+        //delay(500);                        // wait for a half second
+        //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
     }
 
     void setVel(float vel){
         target_vel=angleToStep(vel);
-        stepper->setSpeed(target_vel);
+        stepper.setSpeed(target_vel);
 
     }
     
 
     void run() {
-        stepper->run();
+        stepper.run();
     }
 
     
@@ -173,13 +180,14 @@ ros::Subscriber<std_msgs::Float32MultiArray> armVelSub("firmware_arm_vel", setTa
 ros::Subscriber<std_msgs::Float32> armPinzaSub("firmware_arm_pinza", pinza_cb);
 
 void setup() {
-    wrapper.reset(); // reset the target device
-    //nh.getHardware()->setBaud(115200);
+    //wrapper.reset(); // reset the target device
+    nh.getHardware()->setBaud(115200);
     nh.initNode();
     nh.subscribe(armPosSub);
     nh.subscribe(armVelSub);
     nh.subscribe(armPinzaSub);
    
+    
     }
 
 void loop() {
@@ -207,3 +215,24 @@ void loop() {
     nh.spinOnce();
     ////delay(100);
 }
+
+//int led = LED_BUILTIN;
+
+//void setup() {
+//  // Some boards work best if we also make a serial connection
+//  Serial.begin(115200);
+//
+//  // set LED to be an output pin
+//  pinMode(led, OUTPUT);
+//}
+//
+//void loop() {
+//  // Say hi!
+//  Serial.println("Hello!");
+//  
+//  digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
+//  delay(500);                // wait for a half second
+//  digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
+//  delay(500);                // wait for a half second
+//}
+

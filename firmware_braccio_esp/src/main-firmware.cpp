@@ -1,5 +1,6 @@
 #include "main.h"
 #include<Wire.h>
+#include <ros.h>
 #include<AS5600.h>    // libreria: robtillaart/AS5600@^0.4.1           
 #include<HardwareSerial.h> //necessario per l'esp a quanto pare
 #include<TCA9548.h>   // libreria: robtillaart/TCA9548@^0.1.5 (il bro si diverte un sacco con queste schede)
